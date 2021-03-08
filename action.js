@@ -11,6 +11,7 @@ const core = require('@actions/core');
 const github = require('@actions/github');
 const http = require('https');
 const { parse } = require('url');
+const { basename } = require('path');
 
 (async () => {
     try {
