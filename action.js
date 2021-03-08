@@ -12,6 +12,7 @@ const github = require('@actions/github');
 const http = require('https');
 const { parse } = require('url');
 const { basename } = require('path');
+const { callbackify } = require('util');
 
 (async () => {
     try {
@@ -59,6 +60,25 @@ const { basename } = require('path');
             info('All is norminal 🚀. Execution has ended.');
         }
 
+        function get(url, file, callback) {
+
+            const options = {
+                headers: { 'User-Agent': 'sondreb/action-release-download' }
+            };
+
+            http.get(url, options, (res) => {
+                if (res.statusCode === 301 || res.statusCode === 302) {
+                    console.log('Forwarding to: ' + res.headers.location);
+                    return get(res.headers.location);
+                }
+
+                debug(`Download completed: ${url}`);
+
+                res.pipe(file);
+                callback();
+            });
+        }
+
         function downloadFiles(urls) {
             var url = urls.pop();
 
@@ -67,48 +87,59 @@ const { basename } = require('path');
                 return;
             }
 
-            var blockchainDownloadRequest = http.get(url, options).on('response', function (res) {
-                const uri = parse(url);
-                const fileName = basename(uri.path);
-                const filePath = path.join(folder, fileName);
-                const len = parseInt(res.headers['content-length'], 10);
-                let downloaded = 0;
+            const uri = parse(url);
+            const fileName = basename(uri.path);
+            const filePath = path.join(folder, fileName);
 
-                var file = fs.createWriteStream(filePath);
+            var file = fs.createWriteStream(filePath);
 
-                res.on('data', function (chunk) {
-                    file.write(chunk);
-                    downloaded += chunk.length;
-
-                    debug(`Downloaded ${(100.0 * downloaded / len).toFixed(2)}%, ${downloaded} bytes of total ${len} bytes.`);
-
-                    // callback(false, { url: fileUrl, target: filePath, size: len, downloaded: downloaded, progress: (100.0 * downloaded / len).toFixed(2), status: 'Downloading' });
-                    //process.stdout.write();
-                    // reset timeout
-                    clearTimeout(timeoutId);
-                    timeoutId = setTimeout(fn, timeout);
-                }).on('end', function () {
-                    // clear timeout
-                    clearTimeout(timeoutId);
-                    file.end();
-
-                    debug(`Download completed: ${url}`);
-
-                    // Process the next file
-                    downloadFiles(urls);
-                }).on('error', function (err) {
-                    info(`ERROR: Failed to write file: ${url}`)
-                    // clear timeout
-                    clearTimeout(timeoutId);
-                    // callback(true, { size: 0, downloaded: downloaded, progress: (100.0 * downloaded / len).toFixed(2), url: fileUrl, target: filePath, status: 'Error' }, err.message);
-                });
+            // Get the file then continue on the next.
+            get(url, file, () => {
+                downloadFiles(urls);
             });
 
-            // generate timeout handler
-            var fn = timeout_wrapper(blockchainDownloadRequest);
+            // var downloadRequest = http.get(url, options).on('response', function (res) {
+            //     const uri = parse(url);
+            //     const fileName = basename(uri.path);
+            //     const filePath = path.join(folder, fileName);
+            //     const len = parseInt(res.headers['content-length'], 10);
+            //     let downloaded = 0;
 
-            // set initial timeout
-            var timeoutId = setTimeout(fn, timeout);
+            //     var file = fs.createWriteStream(filePath);
+
+            //     res.on('data', function (chunk) {
+            //         file.write(chunk);
+            //         downloaded += chunk.length;
+
+            //         debug(`Downloaded ${(100.0 * downloaded / len).toFixed(2)}%, ${downloaded} bytes of total ${len} bytes.`);
+
+            //         // callback(false, { url: fileUrl, target: filePath, size: len, downloaded: downloaded, progress: (100.0 * downloaded / len).toFixed(2), status: 'Downloading' });
+            //         //process.stdout.write();
+            //         // reset timeout
+            //         clearTimeout(timeoutId);
+            //         timeoutId = setTimeout(fn, timeout);
+            //     }).on('end', function () {
+            //         // clear timeout
+            //         clearTimeout(timeoutId);
+            //         file.end();
+
+            //         debug(`Download completed: ${url}`);
+
+            //         // Process the next file
+            //         downloadFiles(urls);
+            //     }).on('error', function (err) {
+            //         info(`ERROR: Failed to write file: ${url}`)
+            //         // clear timeout
+            //         clearTimeout(timeoutId);
+            //         // callback(true, { size: 0, downloaded: downloaded, progress: (100.0 * downloaded / len).toFixed(2), url: fileUrl, target: filePath, status: 'Error' }, err.message);
+            //     });
+            // });
+
+            // // generate timeout handler
+            // var fn = timeout_wrapper(downloadRequest);
+
+            // // set initial timeout
+            // var timeoutId = setTimeout(fn, timeout);
         }
 
         // Fetch the assets JSON file to find all artifacts to download
