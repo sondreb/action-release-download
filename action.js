@@ -9,6 +9,7 @@ const path = require('path');
 const mime = require('mime');
 const core = require('@actions/core');
 const github = require('@actions/github');
+const http = require('https');
 
 (async () => {
     try {
@@ -27,7 +28,7 @@ const github = require('@actions/github');
 
         const folder = core.getInput('folder');
 
-        if (!fs.existsSync(folder)){
+        if (!fs.existsSync(folder)) {
             info(`Creating the destination folder: "${folder}".`);
             fs.mkdirSync(folder);
         }
@@ -77,17 +78,27 @@ const github = require('@actions/github');
         // }
 
         // Fetch the assets JSON file to find all artifacts to download
-        fetch(url)
-            .then(res => {
-                console.log(result);
-                return res.json();
-            })
-            .then(json => {
-                console.log(json);
+        http.get(url, res => {
+            let data = [];
+            const headerDate = res.headers && res.headers.date ? res.headers.date : 'no response date';
+            console.log('Status Code:', res.statusCode);
+            console.log('Date in Response header:', headerDate);
 
-                console.log('Process all artifacts and download them!');
-            })
-            .catch(err => console.log(err));
+            res.on('data', chunk => {
+                data.push(chunk);
+            });
+
+            res.on('end', () => {
+                console.log('Response ended: ');
+                const assets = JSON.parse(Buffer.concat(data).toString());
+
+                for (asset of assets) {
+                    console.log(`Download: ${asset.browser_download_url}`);
+                }
+            });
+        }).on('error', err => {
+            console.log('Error: ', err.message);
+        });
 
         // info(`🎄 <- That is when I wrote this code.`);
 
