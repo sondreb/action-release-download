@@ -25,19 +25,26 @@ const github = require('@actions/github');
         const prerelease = core.getInput('prerelease') == 'true';
         let files = null;
 
-        if (core.getInput('folder')) {
-            const folder = core.getInput('folder');
-            log('Reading files in folder:' + folder);
+        const folder = core.getInput('folder');
 
-            files = fs.readdirSync(folder, { withFileTypes: true })
-                .filter(item => !item.isDirectory())
-                .map(item => path.join(folder, item.name))
+        if (!fs.existsSync(folder)){
+            info(`Creating the destination folder: "${folder}".`);
+            fs.mkdirSync(folder);
+        }
 
-            log('Found files: ', files);
-        }
-        else {
-            files = core.getInput('files').split(';');
-        }
+        // if (core.getInput('folder')) {
+        //     const folder = core.getInput('folder');
+        //     log('Reading files in folder:' + folder);
+
+        //     files = fs.readdirSync(folder, { withFileTypes: true })
+        //         .filter(item => !item.isDirectory())
+        //         .map(item => path.join(folder, item.name))
+
+        //     log('Found files: ', files);
+        // }
+        // else {
+        //     files = core.getInput('files').split(';');
+        // }
 
         const commit = 'master'; // This could likely be a parameter in the future. Get commit like this: github.context.sha
         let release = null;
