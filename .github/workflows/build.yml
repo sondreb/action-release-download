@@ -51,7 +51,7 @@ jobs:
         folder: "./test/"
         draft: true
         prerelease: true
-        commit: 'main',
+        commit: 'main'
         body: 'A little test - some updated text!'
         #body: ${{outputs.changelog.}}
         name: "Draft Release (Release ${{env.VERSION}})"
