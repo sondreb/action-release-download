@@ -81,7 +81,6 @@ const { basename } = require('path');
         };
 
         function downloadFiles(urls) {
-
             var url = urls.pop();
             const uri = parse(url);
             const fileName = basename(uri.path);
@@ -89,7 +88,7 @@ const { basename } = require('path');
 
             var file = fs.createWriteStream(filePath);
 
-            http.get(url, options).on('response', function (res) {
+            var blockchainDownloadRequest = http.get(url, options).on('response', function (res) {
                 var len = parseInt(res.headers['content-length'], 10);
                 var downloaded = 0;
 
@@ -130,7 +129,6 @@ const { basename } = require('path');
 
             // set initial timeout
             var timeoutId = setTimeout(fn, timeout);
-
 
             // Fetch the assets JSON file to find all artifacts to download
             // http.get(url, options, res => {
