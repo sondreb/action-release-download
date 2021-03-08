@@ -25,7 +25,7 @@ jobs:
         echo "assets[0] - ${{ github.event.assets[0] }}"
 
     - name: Release Download
-      uses: sondreb/action-release-download
+      uses: sondreb/action-release-download@main
       with:
         verbose: false
         token: ${{ secrets.GITHUB_TOKEN }}
