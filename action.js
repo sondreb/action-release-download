@@ -80,6 +80,9 @@ const { basename } = require('path');
                 res.on('data', function (chunk) {
                     file.write(chunk);
                     downloaded += chunk.length;
+
+                    debug(`Downloaded ${(100.0 * downloaded / len).toFixed(2)}%, ${downloaded} bytes of total ${len} bytes.`);
+
                     // callback(false, { url: fileUrl, target: filePath, size: len, downloaded: downloaded, progress: (100.0 * downloaded / len).toFixed(2), status: 'Downloading' });
                     //process.stdout.write();
                     // reset timeout
@@ -89,6 +92,9 @@ const { basename } = require('path');
                     // clear timeout
                     clearTimeout(timeoutId);
                     file.end();
+                    file = null;
+
+                    debug(`Download completed: ${url}`);
 
                     // Process the next file
                     downloadFiles(urls);
