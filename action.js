@@ -10,6 +10,7 @@ const mime = require('mime');
 const core = require('@actions/core');
 const github = require('@actions/github');
 const http = require('https');
+const { parse } = require('url');
 
 (async () => {
     try {
@@ -25,6 +26,7 @@ const http = require('https');
         const draft = core.getInput('draft') == 'true';
         const prerelease = core.getInput('prerelease') == 'true';
         let files = null;
+        var timeout = 10000;
 
         const folder = core.getInput('folder');
 
@@ -65,6 +67,94 @@ const http = require('https');
             }
         }
 
+        var timeout_wrapper = function (req) {
+            return function () {
+                console.log('abort');
+                req.abort();
+                callback(true, { size: 0, downloaded: 0, progress: 0, status: 'Timeout' }, "File transfer timeout!");
+            };
+        };
+
+        function downloadFiles(urls) {
+
+            var url = urls.pop();
+            const uri = parse(url);
+            const fileName = basename(uri.path);
+            const filePath = path.join(folder, fileName);
+
+            var file = fs.createWriteStream(filePath);
+
+            http.get(fileUrl).on('response', function (res) {
+                var len = parseInt(res.headers['content-length'], 10);
+                var downloaded = 0;
+
+                res.on('data', function (chunk) {
+                    file.write(chunk);
+                    downloaded += chunk.length;
+                    // callback(false, { url: fileUrl, target: filePath, size: len, downloaded: downloaded, progress: (100.0 * downloaded / len).toFixed(2), status: 'Downloading' });
+                    //process.stdout.write();
+                    // reset timeout
+                    clearTimeout(timeoutId);
+                    timeoutId = setTimeout(fn, timeout);
+                }).on('end', function () {
+                    // clear timeout
+                    clearTimeout(timeoutId);
+                    file.end();
+
+                    // Process the next file
+                    downloadFiles(urls);
+
+                    // if (downloaded != len) {
+                    //     callback(true, { size: len, downloaded: downloaded, progress: (100.0 * downloaded / len).toFixed(2), url: fileUrl, target: filePath, status: 'Incomplete' });
+                    // }
+                    // else {
+                    //     callback(true, { size: len, downloaded: downloaded, progress: (100.0 * downloaded / len).toFixed(2), url: fileUrl, target: filePath, status: 'Done' });
+                    // }
+
+                    // console.log(file_name + ' downloaded to: ' + folder);
+                    // callback(null);
+                }).on('error', function (err) {
+                    // clear timeout
+                    clearTimeout(timeoutId);
+                    // callback(true, { size: 0, downloaded: downloaded, progress: (100.0 * downloaded / len).toFixed(2), url: fileUrl, target: filePath, status: 'Error' }, err.message);
+                });
+            });
+
+            // generate timeout handler
+            var fn = timeout_wrapper(blockchainDownloadRequest);
+
+            // set initial timeout
+            var timeoutId = setTimeout(fn, timeout);
+
+
+            // Fetch the assets JSON file to find all artifacts to download
+            // http.get(url, options, res => {
+            //     let data = [];
+            //     const headerDate = res.headers && res.headers.date ? res.headers.date : 'no response date';
+            //     console.log('Status Code:', res.statusCode);
+            //     console.log('Date in Response header:', headerDate);
+
+            //     res.on('data', chunk => {
+            //         data.push(chunk);
+            //     });
+
+            //     res.on('end', () => {
+            //         console.log('Response ended: ');
+            //         const assets = JSON.parse(Buffer.concat(data).toString());
+            //         const files = [];
+
+            //         for (asset of assets) {
+            //             console.log(`Download: ${asset.browser_download_url}`);
+            //             files.push(asset.browser_download_url);
+            //         }
+
+            //         downloadFiles(urls);
+            //     });
+            // }).on('error', err => {
+            //     console.log('Error: ', err.message);
+            // });
+        }
+
         // function getFile(filePath) {
 
         //     log('getFile: ' + filePath);
@@ -79,7 +169,7 @@ const http = require('https');
 
         const options = {
             headers: { 'User-Agent': 'sondreb/action-release-download' }
-          };
+        };
 
         // Fetch the assets JSON file to find all artifacts to download
         http.get(url, options, res => {
@@ -95,10 +185,14 @@ const http = require('https');
             res.on('end', () => {
                 console.log('Response ended: ');
                 const assets = JSON.parse(Buffer.concat(data).toString());
+                const files = [];
 
                 for (asset of assets) {
                     console.log(`Download: ${asset.browser_download_url}`);
+                    files.push(asset.browser_download_url);
                 }
+
+                downloadFiles(files);
             });
         }).on('error', err => {
             console.log('Error: ', err.message);
