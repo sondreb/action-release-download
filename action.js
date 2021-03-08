@@ -67,15 +67,14 @@ const { basename } = require('path');
                 return;
             }
 
-            const uri = parse(url);
-            const fileName = basename(uri.path);
-            const filePath = path.join(folder, fileName);
-
-            var file = fs.createWriteStream(filePath);
-
             var blockchainDownloadRequest = http.get(url, options).on('response', function (res) {
-                var len = parseInt(res.headers['content-length'], 10);
-                var downloaded = 0;
+                const uri = parse(url);
+                const fileName = basename(uri.path);
+                const filePath = path.join(folder, fileName);
+                const len = parseInt(res.headers['content-length'], 10);
+                let downloaded = 0;
+
+                var file = fs.createWriteStream(filePath);
 
                 res.on('data', function (chunk) {
                     file.write(chunk);
@@ -92,13 +91,13 @@ const { basename } = require('path');
                     // clear timeout
                     clearTimeout(timeoutId);
                     file.end();
-                    file = null;
 
                     debug(`Download completed: ${url}`);
 
                     // Process the next file
                     downloadFiles(urls);
                 }).on('error', function (err) {
+                    info(`ERROR: Failed to write file: ${url}`)
                     // clear timeout
                     clearTimeout(timeoutId);
                     // callback(true, { size: 0, downloaded: downloaded, progress: (100.0 * downloaded / len).toFixed(2), url: fileUrl, target: filePath, status: 'Error' }, err.message);
