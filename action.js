@@ -82,6 +82,11 @@ const { basename } = require('path');
 
         function downloadFiles(urls) {
             var url = urls.pop();
+
+            if (!url) {
+                return;
+            }
+
             const uri = parse(url);
             const fileName = basename(uri.path);
             const filePath = path.join(folder, fileName);
