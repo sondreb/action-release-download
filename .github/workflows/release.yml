@@ -1,0 +1,43 @@
+name: Publish Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+
+  publishPackages:
+
+    runs-on: ubuntu-latest
+    
+    steps:
+
+    - uses: actions/checkout@v2
+
+    - name: Log Variables
+      run: |
+        echo "action - ${{ github.event.action }}"
+        echo "url - ${{ github.event.release.url }}"
+        echo "assets_url - ${{ github.event.release.assets_url }}"
+        echo "id - ${{ github.event.release.id }}"
+        echo "tag_name - ${{ github.event.release.tag_name }}"
+        echo "assets - ${{ github.event.assets }}"
+        echo "assets[0] - ${{ github.event.assets[0] }}"
+
+    - name: Release Download
+      uses: sondreb/action-release-download@master
+      with:
+        verbose: false
+        token: ${{ secrets.GITHUB_TOKEN }}
+        url: ${{ github.event.release.assets_url }}
+        #files: "action.js;README.md"
+        folder: "./artifacts/"
+        draft: true
+        prerelease: true
+        body: 'A little test - some updated text!'
+        #body: ${{outputs.changelog.}}
+        name: "Draft Release (Release ${{env.VERSION}})"
+        tag: v${{env.VERSION}}
+
+    - name: Display structure of downloaded files
+      run: ls -R

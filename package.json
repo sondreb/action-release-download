@@ -1,0 +1,32 @@
+{
+    "name": "action-release-download",
+    "version": "0.0.1",
+    "private": true,
+    "description": "GitHub Action: GitHub Release Download Action",
+    "main": "action.js",
+    "scripts": {
+        "version": "node -p \"require('./package.json').version\"",
+        "changelog": "conventional-changelog -i CHANGELOG.md -s -r 0 && git add CHANGELOG.md"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/sondreb/action-release-download.git"
+    },
+    "keywords": [
+        "github",
+        "actions",
+        "node",
+        "setup",
+        "download"
+    ],
+    "author": "Sondre Bjellås",
+    "license": "MIT",
+    "dependencies": {
+        "@actions/core": "^1.2.6",
+        "@actions/github": "^4.0.0",
+        "changelog-parser": "^2.8.0"
+    },
+    "devDependencies": {
+        "conventional-changelog-cli": "^2.1.1"
+    }
+}
