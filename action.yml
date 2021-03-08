@@ -10,19 +10,6 @@ inputs:
     description: 'The GitHub token.'
     required: true
     default: ''
-  tag:
-    description: 'An optional tag for the release. If this is omitted the git ref will be used (if it is a tag).'
-    default: ''
-  name:
-    required: true
-  draft:
-    description: "Optionally marks this release as a draft release. Set to true to enable."
-    default: false
-  prerelease:
-    default: false
-  files:
-    required: false
-    default: ''
   url:
     description: 'URL to assets JSON.'
     required: true
@@ -30,8 +17,9 @@ inputs:
   folder:
     required: false
     default: ''
-  body:
-    default: ''
+  verbose:
+    required: false
+    default: 'false'
 runs:
   using: node12
   main: action.js
