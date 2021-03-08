@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - master
       - feature/*
 
 jobs:
@@ -50,7 +51,7 @@ jobs:
         folder: "./test/"
         draft: true
         prerelease: true
-        commit: 'main'
+        commit: 'master'
         body: 'A little test - some updated text!'
         #body: ${{outputs.changelog.}}
         name: "Draft Release (Release ${{env.VERSION}})"
