@@ -1,6 +1,6 @@
 name: sondreb/action-release-download
 description: |
-  GitHub Release Download Action
+  GitHub Release Action
 author: Sondre Bjellås
 branding:
   icon: box
@@ -13,9 +13,6 @@ inputs:
   tag:
     description: 'An optional tag for the release. If this is omitted the git ref will be used (if it is a tag).'
     default: ''
-  url:
-    description: 'Url of asset files',
-    required: true
   name:
     required: true
   draft:
@@ -25,6 +22,10 @@ inputs:
     default: false
   files:
     required: false
+    default: ''
+  url:
+    description: 'URL to assets JSON.'
+    required: true
     default: ''
   folder:
     required: false

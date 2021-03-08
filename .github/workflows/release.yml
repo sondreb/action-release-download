@@ -27,7 +27,6 @@ jobs:
     - name: Release Download
       uses: sondreb/action-release-download@master
       with:
-        verbose: false
         token: ${{ secrets.GITHUB_TOKEN }}
         url: ${{ github.event.release.assets_url }}
         #files: "action.js;README.md"
