@@ -45,7 +45,6 @@ jobs:
     - name: Release
       uses: sondreb/action-release@master
       with:
-        verbose: false
         token: ${{ secrets.GITHUB_TOKEN }}
         #files: "action.js;README.md"
         folder: "./test/"
