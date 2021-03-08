@@ -76,6 +76,10 @@ const { basename } = require('path');
             };
         };
 
+        const options = {
+            headers: { 'User-Agent': 'sondreb/action-release-download' }
+        };
+
         function downloadFiles(urls) {
 
             var url = urls.pop();
@@ -85,7 +89,7 @@ const { basename } = require('path');
 
             var file = fs.createWriteStream(filePath);
 
-            http.get(fileUrl).on('response', function (res) {
+            http.get(url, options).on('response', function (res) {
                 var len = parseInt(res.headers['content-length'], 10);
                 var downloaded = 0;
 
@@ -168,9 +172,7 @@ const { basename } = require('path');
         //     }
         // }
 
-        const options = {
-            headers: { 'User-Agent': 'sondreb/action-release-download' }
-        };
+
 
         // Fetch the assets JSON file to find all artifacts to download
         http.get(url, options, res => {
