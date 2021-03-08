@@ -69,7 +69,7 @@ const { callbackify } = require('util');
             http.get(url, options, (res) => {
                 if (res.statusCode === 301 || res.statusCode === 302) {
                     console.log('Forwarding to: ' + res.headers.location);
-                    return get(res.headers.location);
+                    return get(res.headers.location, file, callback);
                 }
 
                 debug(`Download completed: ${url}`);
