@@ -57,17 +57,17 @@ const github = require('@actions/github');
             }
         }
 
-        function getFile(filePath) {
+        // function getFile(filePath) {
 
-            log('getFile: ' + filePath);
+        //     log('getFile: ' + filePath);
 
-            return {
-                name: path.basename(filePath),
-                mime: mime.getType(filePath) || 'application/octet-stream',
-                size: fs.lstatSync(filePath).size,
-                file: fs.readFileSync(filePath)
-            }
-        }
+        //     return {
+        //         name: path.basename(filePath),
+        //         mime: mime.getType(filePath) || 'application/octet-stream',
+        //         size: fs.lstatSync(filePath).size,
+        //         file: fs.readFileSync(filePath)
+        //     }
+        // }
 
         // Fetch the assets JSON file to find all artifacts to download
         fetch(url)
