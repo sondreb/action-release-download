@@ -18,9 +18,18 @@ const { callbackify } = require('util');
     try {
         // const api = github.getOctokit(core.getInput('token'));
         const url = core.getInput('url');
+
+        // Create an array of the initial URL, which will be populated with paging URLs after initial request.
+        let urls = [url];
+
         const verbose = core.getInput('verbose') == 'true'; // input is always string, not boolean.
         const folder = core.getInput('folder');
         var timeout = 10000;
+
+        // Options for HTTP requests against GitHub APIs. User-Agent is required.
+        const options = {
+            headers: { 'User-Agent': 'sondreb/action-release-download' }
+        };
 
         info(`Url input: ${url}`);
         info(`Folder input: ${folder}`);
@@ -50,10 +59,6 @@ const { callbackify } = require('util');
                 req.abort();
                 // callback(true, { size: 0, downloaded: 0, progress: 0, status: 'Timeout' }, "File transfer timeout!");
             };
-        };
-
-        const options = {
-            headers: { 'User-Agent': 'sondreb/action-release-download' }
         };
 
         function completed() {
@@ -97,77 +102,60 @@ const { callbackify } = require('util');
             get(url, file, () => {
                 downloadFiles(urls);
             });
-
-            // var downloadRequest = http.get(url, options).on('response', function (res) {
-            //     const uri = parse(url);
-            //     const fileName = basename(uri.path);
-            //     const filePath = path.join(folder, fileName);
-            //     const len = parseInt(res.headers['content-length'], 10);
-            //     let downloaded = 0;
-
-            //     var file = fs.createWriteStream(filePath);
-
-            //     res.on('data', function (chunk) {
-            //         file.write(chunk);
-            //         downloaded += chunk.length;
-
-            //         debug(`Downloaded ${(100.0 * downloaded / len).toFixed(2)}%, ${downloaded} bytes of total ${len} bytes.`);
-
-            //         // callback(false, { url: fileUrl, target: filePath, size: len, downloaded: downloaded, progress: (100.0 * downloaded / len).toFixed(2), status: 'Downloading' });
-            //         //process.stdout.write();
-            //         // reset timeout
-            //         clearTimeout(timeoutId);
-            //         timeoutId = setTimeout(fn, timeout);
-            //     }).on('end', function () {
-            //         // clear timeout
-            //         clearTimeout(timeoutId);
-            //         file.end();
-
-            //         debug(`Download completed: ${url}`);
-
-            //         // Process the next file
-            //         downloadFiles(urls);
-            //     }).on('error', function (err) {
-            //         info(`ERROR: Failed to write file: ${url}`)
-            //         // clear timeout
-            //         clearTimeout(timeoutId);
-            //         // callback(true, { size: 0, downloaded: downloaded, progress: (100.0 * downloaded / len).toFixed(2), url: fileUrl, target: filePath, status: 'Error' }, err.message);
-            //     });
-            // });
-
-            // // generate timeout handler
-            // var fn = timeout_wrapper(downloadRequest);
-
-            // // set initial timeout
-            // var timeoutId = setTimeout(fn, timeout);
         }
 
-        // Fetch the assets JSON file to find all artifacts to download
-        http.get(url, options, res => {
-            let data = [];
-            const headerDate = res.headers && res.headers.date ? res.headers.date : 'no response date';
-            console.log('Status Code:', res.statusCode);
-            console.log('Date in Response header:', headerDate);
+        function getFiles(urls, files, processLinks) {
+            const url = urls.pop();
 
-            res.on('data', chunk => {
-                data.push(chunk);
-            });
+            // When all URLs has been processes, start downloading the files.
+            if (!url) {
+                downloadFiles(files);
+                return;
+            }
 
-            res.on('end', () => {
-                console.log('Response ended: ');
-                const assets = JSON.parse(Buffer.concat(data).toString());
-                const files = [];
+            http.get(url, options, res => {
+                let data = [];
+                const headerDate = res.headers && res.headers.date ? res.headers.date : 'no response date';
+                console.log('Status Code:', res.statusCode);
+                console.log('Date in Response header:', headerDate);
 
-                for (asset of assets) {
-                    console.log(`Download: ${asset.browser_download_url}`);
-                    files.push(asset.browser_download_url);
+                if (processLinks) {
+                    // Process all paging links, but only on first request.
+                    console.log(res.headers.link);
+                    var links = res.headers.link.split(', ');
+
+                    for (i = 0; i < links.length; i++) {
+                        let link = links[i];
+                        link = link.substring(1, link.indexOf('>'));
+                        console.log('link:' + link);
+                        urls.push(link);
+                    }
                 }
 
-                downloadFiles(files);
+                res.on('data', chunk => {
+                    data.push(chunk);
+                });
+
+                res.on('end', () => {
+                    console.log('Response ended: ');
+                    const assets = JSON.parse(Buffer.concat(data).toString());
+
+                    for (asset of assets) {
+                        console.log(`Download: ${asset.browser_download_url}`);
+                        files.push(asset.browser_download_url);
+                    }
+
+                    getFiles(urls, files, false);
+                });
+            }).on('error', err => {
+                console.log('Error: ', err.message);
             });
-        }).on('error', err => {
-            console.log('Error: ', err.message);
-        });
+        }
+
+        const files = [];
+
+        getFiles(urls, files, true);
+
     } catch (error) {
         console.error(error);
         core.setFailed(error.message);

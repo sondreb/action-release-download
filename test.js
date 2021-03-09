@@ -6,79 +6,71 @@ const http = require('https');
 const { parse } = require('url');
 const { basename } = require('path');
 
-let url = 'https://github.com/sondreb/action-release-download/releases/download/v0.0.1/Blockcore.Features.BlockExplorer.1.0.6.nupkg';
+let url = 'https://api.github.com/repositories/211867945/releases/39413272/assets';
 
 const folder = './artifact';
 
 const uri = parse(url);
 const fileName = basename(uri.path);
 const filePath = path.join(folder, fileName);
-
 const file = fs.createWriteStream(filePath);
 
 // const options = {
 //     headers: { 'User-Agent': 'sondreb/action-release-download' }
 // };
 
-function get(url) {
+const options = {
+    headers: { 'User-Agent': 'sondreb/action-release-download' }
+};
 
-    const options = {
-        headers: { 'User-Agent': 'sondreb/action-release-download' }
-    };
+function getFiles(urls, files, processLinks) {
+    const url = urls.pop();
 
-    http.get(url, options, (res) => {
-        if (res.statusCode === 301 || res.statusCode === 302) {
-            console.log('Forwarding to: ' + res.headers.location);
-            return get(res.headers.location);
+    if (!url) {
+        return;
+    }
+
+    http.get(url, options, res => {
+        let data = [];
+        const headerDate = res.headers && res.headers.date ? res.headers.date : 'no response date';
+        console.log('Status Code:', res.statusCode);
+        console.log('Date in Response header:', headerDate);
+
+        if (processLinks) {
+            // Process all paging links, but only on first request.
+            console.log(res.headers.link);
+            var links = res.headers.link.split(', ');
+
+            for (i = 0; i < links.length; i++) {
+                let link = links[i];
+                link = link.substring(1, link.indexOf('>'));
+                console.log('link:' + link);
+                urls.push(link);
+            }
         }
 
-        console.log('Saving file!');
-        res.pipe(file);
+        res.on('data', chunk => {
+            data.push(chunk);
+        });
 
-        // let body = [];
+        res.on('end', () => {
+            console.log('Response ended: ');
+            const assets = JSON.parse(Buffer.concat(data).toString());
 
-        // res.on("data", (chunk) => {
-        //     body.push(chunk);
-        // });
+            for (asset of assets) {
+                console.log(`Download: ${asset.browser_download_url}`);
+                files.push(asset.browser_download_url);
+            }
 
-        // res.on("end", () => {
-        //     try {
-        //         // remove JSON.parse(...) for plain data
-        //         resolve(JSON.parse(Buffer.concat(body).toString()));
-        //     } catch (err) {
-        //         reject(err);
-        //     }
-        // });
+            getFiles(urls, files, false);
+            // downloadFiles(files);
+        });
+    }).on('error', err => {
+        console.log('Error: ', err.message);
     });
 }
 
-get(url)
+const files = [];
+let urls = ['https://api.github.com/repositories/211867945/releases/39413272/assets'];
 
-// const request = http.get(url, options, function (response) {
-
-//     if (res.statusCode === 301 || res.statusCode === 302) {
-//         return get(res.headers.location, resolve, reject)
-//     }
-
-//     response.pipe(file);
-// });
-
-console.log('Done!');
-
-// var parseChangelog = require('changelog-parser');
-
-// parseChangelog(
-//     {
-//         filePath: 'CHANGELOG.md',
-//         removeMarkdown: false
-//     }
-// )
-//     .then(function (result) {
-//         // changelog object
-//         console.log(result)
-
-//     })
-//     .catch(function (err) {
-//         console.error(err);
-//     });
-
+getFiles(urls, files, true)
