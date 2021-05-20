@@ -121,14 +121,15 @@ const { callbackify } = require('util');
 
                 if (processLinks) {
                     // Process all paging links, but only on first request.
-                    console.log(res.headers.link);
-                    var links = res.headers.link.split(', ');
+                    if (res.headers.link) {
+                        var links = res.headers.link.split(', ');
 
-                    for (i = 0; i < links.length; i++) {
-                        let link = links[i];
-                        link = link.substring(1, link.indexOf('>'));
-                        console.log('link:' + link);
-                        urls.push(link);
+                        for (i = 0; i < links.length; i++) {
+                            let link = links[i];
+                            link = link.substring(1, link.indexOf('>'));
+                            console.log('link:' + link);
+                            urls.push(link);
+                        }
                     }
                 }
 
