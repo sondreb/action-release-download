@@ -1,3 +1,15 @@
+## <small>0.0.2 (2022-01-06)</small>
+
+* Add larger files for testing ([cec1088](https://github.com/sondreb/action-release-download/commit/cec1088))
+* Add support for paging when there are many artifacts ([698fbc4](https://github.com/sondreb/action-release-download/commit/698fbc4))
+* Bug fix ([5e9b216](https://github.com/sondreb/action-release-download/commit/5e9b216))
+* Fix issue with link paging link not being provided by GitHub ([c40c068](https://github.com/sondreb/action-release-download/commit/c40c068))
+* Improve the download process to respect redirects ([cf3efb1](https://github.com/sondreb/action-release-download/commit/cf3efb1))
+* Remove the workflows ([90167f5](https://github.com/sondreb/action-release-download/commit/90167f5))
+* Update packages and clean up repo ([9046298](https://github.com/sondreb/action-release-download/commit/9046298))
+
+
+
 ## <small>0.0.1 (2021-03-08)</small>
 
 * Add a couple of nuget packages for testing ([0dd1d01](https://github.com/sondreb/action-release-download/commit/0dd1d01))
