@@ -34,6 +34,10 @@ This is built as a quick and dirty proof-of-concept and is likely ridled with bu
 
 - Adds support for folders.
 
+0.0.2
+
+- Update packages and clean up test data and repo.
+
 ## License
 
 [MIT](LICENSE)
