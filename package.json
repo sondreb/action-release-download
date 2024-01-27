@@ -1,6 +1,6 @@
 {
     "name": "action-release-download",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "private": true,
     "description": "GitHub Action: GitHub Release Download Action",
     "main": "action.js",
